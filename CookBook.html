@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <title>掃描票據操作 CookBook</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
+                   "Noto Sans TC", "Microsoft JhengHei", Arial, sans-serif;
+      background-color: #f6f8fa;
+      color: #24292f;
+      line-height: 1.8;
+      margin: 0;
+      padding: 0;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 40px auto;
+      background: #ffffff;
+      padding: 40px;
+      border-radius: 10px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    }
+
+    h1 {
+      border-bottom: 3px solid #0969da;
+      padding-bottom: 10px;
+      margin-bottom: 30px;
+      color: #0969da;
+    }
+
+    h2 {
+      margin-top: 40px;
+      color: #1f2328;
+    }
+
+    ol {
+      padding-left: 20px;
+    }
+
+    li {
+      margin-bottom: 16px;
+    }
+
+    code {
+      background: #f0f0f0;
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 0.95em;
+    }
+
+    .note {
+      background: #fff8c5;
+      border-left: 6px solid #eac54f;
+      padding: 16px;
+      margin: 30px 0;
+      border-radius: 6px;
+    }
+
+    footer {
+      margin-top: 50px;
+      text-align: center;
+      color: #6e7781;
+      font-size: 0.9em;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+
+    <h1>📘 掃描票據操作 CookBook</h1>
+
+    <h2>操作步驟</h2>
+    <ol>
+      <li>
+        於網址列輸入：
+        <code>http://172.17.1.56:5500/index.html</code>
+      </li>
+		<img src="1.png alt=說明文字">
+      <li>
+        點選「附件上傳」，選擇事務機掃描的 PDF 檔。
+      </li>
+
+      <li>
+        等待程式分析票據內容。
+      </li>
+
+      <li>
+        確認票據資料無誤後，點選「匯出 CSV」按鈕下載 CSV 檔案。
+      </li>
+
+      <li>
+        點選「下載自動登打車資 (Windows)」，下載
+        <code>自動登打車資.exe</code>。
+        <br>
+        系統會連結至 Google 雲端硬碟，請點選「仍要下載」。
+      </li>
+
+      <li>
+        執行 <code>自動登打車資.exe</code>，
+        輸入 BPM 帳號密碼，點選登入並開始自動填寫。
+      </li>
+
+      <li>
+        程式會自動開啟 Chrome 瀏覽器，並完成登入。
+      </li>
+
+      <li>
+        選擇步驟 4 下載的 CSV 檔案 → 開啟。
+      </li>
+
+      <li>
+        程式會依欄位自動填寫。
+        <div class="note">
+          <strong>注意事項：</strong><br>
+          ・主旨會帶入 CSV 檔案名稱<br>
+          ・先簽人員、行前計畫（地點）、說明請自行補填<br>
+          ・按下右上角 X 可關閉提示視窗
+        </div>
+      </li>
+    </ol>
+
+    <footer>
+      © CookBook 文件｜適用於 GitHub Pages
+    </footer>
+
+  </div>
+</body>
+</html>
