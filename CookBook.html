@@ -2,35 +2,61 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
-  <title>掃描票據操作 CookBook</title>
+  <title>公出交通費自動填表術操作 | CookBook</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
   <style>
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC",
                    "Microsoft JhengHei", Arial, sans-serif;
-      background-color: #f6f8fa;
+      background: #f6f8fa;
       color: #24292f;
-      line-height: 1.8;
       margin: 0;
       padding: 0;
     }
+
     .container {
       max-width: 900px;
-      margin: 40px auto;
-      background: #ffffff;
-      padding: 40px;
+      margin: 20px auto;
+      background: #fff;
+      padding: 30px;
       border-radius: 10px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-    }
-    h1 {
-      border-bottom: 3px solid #0969da;
-      padding-bottom: 10px;
-      margin-bottom: 30px;
-      color: #0969da;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, .08);
     }
 
-    /* 圖片樣式 */
+    h1 {
+      color: #0969da;
+      border-bottom: 3px solid #0969da;
+      padding-bottom: 10px;
+      margin-bottom: 20px;
+      font-size: 1.8em;
+    }
+
+    .accordion {
+      border-top: 1px solid #ccc;
+    }
+    .accordion-header,
+    .faq-header {
+      cursor: pointer;
+      padding: 12px 0;
+      font-size: 1.2em;
+      font-weight: bold;
+      color: #0969da;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #ddd;
+    }
+    .faq-header {
+      color: #444;
+      font-size: 1.1em;
+    }
+
+    .accordion-content,
+    .faq-content {
+      display: none;
+      padding: 8px 0;
+    }
+
     .step-img {
       margin: 12px 0 24px;
       text-align: center;
@@ -41,114 +67,233 @@
       border-radius: 6px;
       box-shadow: 0 4px 8px rgba(0,0,0,0.1);
       cursor: pointer;
-      transition: transform 0.3s;
+      transition: transform .3s;
     }
     .step-img img:hover {
       transform: scale(1.02);
     }
 
     footer {
-      margin-top: 50px;
+      margin-top: 30px;
       text-align: center;
-      color: #6e7781;
-      font-size: 0.9em;
+      color: #777;
+      font-size: .9em;
     }
 
-    /* 引入 Lightbox CSS */
-    @import url("lightbox/simple-lightbox.min.css");
+    @media (max-width: 600px) {
+      h1 { font-size: 1.6em; }
+      .accordion-header { font-size: 1.1em; }
+      .faq-header { font-size: .95em; }
+    }
   </style>
 </head>
 
 <body>
-  <div class="container">
-    <h1>📘 掃描票據操作 CookBook</h1>
+<div class="container">
+  <h1>📘 公出交通費自動填表術操作教學 CookBook</h1>
 
-    <ol>
-      <li>
-        於網址列輸入：
-        <code>http://172.17.1.56:5500/index.html</code>
-        <div class="step-img">
-          <a href="images/1.png"><img src="images/1.png" alt="步驟 1"></a>
-        </div>
-      </li>
-
-      <li>
-        點選「附件上傳」，選擇事務機掃描的 PDF 檔。
-        <div class="step-img">
-          <a href="images/2.png"><img src="images/2.png" alt="步驟 2"></a>
-        </div>
-      </li>
-
-      <li>
-        等待程式分析票據內容。
-        <div class="step-img">
-          <a href="images/3.png"><img src="images/3.png" alt="步驟 3"></a>
-        </div>
-      </li>
-
-      <li>
-        確認票據資料無誤後，點選「匯出 CSV」按鈕下載 CSV 檔案。
-        <div class="step-img">
-          <a href="images/4.png"><img src="images/4.png" alt="步驟 4"></a>
-        </div>
-      </li>
-
-      <li>
-        點選「下載自動登打車資 (Windows)」，下載
-        <code>自動登打車資.exe</code>。系統會連結至 Google 雲端硬碟，請點選「仍要下載」。
-        <div class="step-img">
-          <a href="images/5.png"><img src="images/5.png" alt="步驟 5"></a>
-          <a href="images/5-1.png"><img src="images/5-1.png" alt="步驟 5-1"></a>
-        </div>
-      </li>
-
-      <li>
-        執行 <code>自動登打車資.exe</code>，輸入 BPM 帳號密碼，點選登入並開始自動填寫。
-        <div class="step-img">
-          <a href="images/6.png"><img src="images/6.png" alt="步驟 6"></a>
-        </div>
-      </li>
-
-      <li>
-        程式會自動開啟 Chrome 瀏覽器，並完成登入。
-        <div class="step-img">
-          <a href="images/7.png"><img src="images/7.png" alt="步驟 7"></a>
-        </div>
-      </li>
-
-      <li>
-        選擇步驟 4 下載的 CSV 檔案 → 開啟。
-        <div class="step-img">
-          <a href="images/8.png"><img src="images/8.png" alt="步驟 8"></a>
-        </div>
-      </li>
-
-      <li>
-        程式會依欄位自動填寫。
-        <div class="note">
-          <strong>注意事項：</strong><br>
-          ・主旨會帶入 CSV 檔案名稱<br>
-          ・先簽人員、行前計畫（地點）、說明請自行補填<br>
-          ・按下右上角 X 可關閉提示視窗
-        </div>
-        <div class="step-img">
-          <a href="images/9.png"><img src="images/9.png" alt="步驟 9"></a>
-        </div>
-      </li>
-
-    </ol>
-
-    <footer>© CookBook 文件｜適用於 GitHub Pages</footer>
+  <!-- Accordion 1 -->
+  <div class="accordion">
+    <div class="accordion-header">
+      步驟1. 將車資轉成 CSV <span>＋</span>
+    </div>
+    <div class="accordion-content">
+      <ol>
+        <li>
+          在網址列輸入：<code>http://172.17.1.56:5500/index.html</code>
+          <div class="step-img">
+            <a href="images/1.png"><img src="images/1.png" alt="步驟 1"></a>
+          </div>
+        </li>
+        <li>
+          點選「附件上傳」，選擇掃描的 PDF 檔
+          <div class="step-img">
+            <a href="images/2.png"><img src="images/2.png" alt="步驟 2"></a>
+          </div>
+        </li>
+        <li>
+          等待程式分析
+          <div class="step-img">
+            <a href="images/3.png"><img src="images/3.png" alt="步驟 3"></a>
+          </div>
+        </li>
+        <li>
+          確認資料無誤後，點「匯出 CSV」
+          <div class="step-img">
+            <a href="images/4.png"><img src="images/4.png" alt="步驟 4"></a>
+          </div>
+        </li>
+      </ol>
+    </div>
   </div>
 
-  <!-- Lightbox JS -->
-  <script src="lightbox/simple-lightbox.min.js"></script>
-  <script>
-    // 啟動 SimpleLightbox
-    const lightbox = new SimpleLightbox('.step-img a', {
-      captions: true,
-      captionsData: 'alt'
+  <!-- Accordion 2 -->
+  <div class="accordion">
+    <div class="accordion-header">
+      步驟2. 下載 & 執行 自動填寫程式 <span>＋</span>
+    </div>
+    <div class="accordion-content">
+      <ol start="5">
+        <li>
+          下載 <code>自動登打車資.exe</code>
+          <div class="step-img">
+            <a href="images/5.png"><img src="images/5.png" alt="步驟 5"></a>
+            <a href="images/5-1.png"><img src="images/5-1.png" alt="步驟 5-1"></a>
+          </div>
+        </li>
+        <li>
+          執行程式並登入 BPM
+          <div class="step-img">
+            <a href="images/6.png"><img src="images/6.png" alt="步驟 6"></a>
+          </div>
+        </li>
+        <li>
+          Chrome 自動登入
+          <div class="step-img">
+            <a href="images/7.png"><img src="images/7.png" alt="步驟 7"></a>
+          </div>
+        </li>
+        <li>
+          開啟步驟1 下載的 CSV
+          <div class="step-img">
+            <a href="images/8.png"><img src="images/8.png" alt="步驟 8"></a>
+          </div>
+        </li>
+        <li>
+          程式自動填寫（注意事項見提醒）
+          <div class="step-img">
+            <a href="images/9.png"><img src="images/9.png" alt="步驟 9"></a>
+          </div>
+        </li>
+      </ol>
+    </div>
+  </div>
+
+  <!-- Accordion 3 (FAQ) -->
+  <div class="accordion">
+    <div class="accordion-header">
+      步驟3. 疑難雜症排除 <span>＋</span>
+    </div>
+    <div class="accordion-content">
+
+      <div class="faq-item">
+        <div class="faq-header">
+          1. MAC 電腦可以執行程式嗎？ <span>＋</span>
+        </div>
+        <div class="faq-content">
+          不行，Mac 無法直接執行 Windows 的 .exe，需要安裝 Windows 虛擬機。
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-header">
+          2. 掃描的票據可以一張 A4 貼不同日期嗎？ <span>＋</span>
+        </div>
+        <div class="faq-content">
+          不建議。一張 A4 只貼一個日期，再掃描。
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-header">
+          3. 附件上傳支援哪些格式？ <span>＋</span>
+        </div>
+        <div class="faq-content">
+          支援 PDF 與各種清晰圖檔，並包含日期、交通工具、費用等資訊。
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-header">
+          4. 若 AI 分析結果錯誤怎麼辦？ <span>＋</span>
+        </div>
+        <div class="faq-content">
+          先檢查票據清晰度；仍錯誤可在網頁上修改後再匯出 CSV。
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-header">
+          5. 上傳後還能新增資料嗎？ <span>＋</span>
+        </div>
+        <div class="faq-content">
+          可以，點「新增一筆」手動輸入後再匯出 CSV。
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-header">
+          6. Chrome 顯示密碼外洩警告怎麼辦？ <span>＋</span>
+        </div>
+        <div class="faq-content">
+          這是 Chrome 密碼檢測提醒，建議更新密碼後再使用程式。
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <footer>© CookBook 文件｜適用於 GitHub Pages</footer>
+</div>
+
+<script>
+  document.querySelectorAll('.accordion-header').forEach(header => {
+    header.addEventListener('click', () => {
+      const currentContent = header.nextElementSibling;
+
+      // 關閉其他
+      document.querySelectorAll('.accordion-content').forEach(content => {
+        if (content !== currentContent) {
+          content.style.display = 'none';
+          const otherIcon = content.previousElementSibling.querySelector('span');
+          if (otherIcon) otherIcon.textContent = '＋';
+        }
+      });
+
+      // Toggle current
+      const icon = header.querySelector('span');
+      if (currentContent.style.display === 'block') {
+        currentContent.style.display = 'none';
+        icon.textContent = '＋';
+      } else {
+        currentContent.style.display = 'block';
+        icon.textContent = '－';
+
+        // 如果是步驟2 → 滾到第5項
+        if (header.textContent.trim().startsWith('步驟2')) {
+          const list = currentContent.querySelector('ol');
+          if (list) list.scrollIntoView({ behavior: 'smooth' });
+        }
+      }
     });
-  </script>
+  });
+
+  document.querySelectorAll('.faq-header').forEach(faqHeader => {
+    faqHeader.addEventListener('click', () => {
+      const faqContent = faqHeader.nextElementSibling;
+
+      const container = faqHeader.closest('.accordion-content');
+      if (container) {
+        container.querySelectorAll('.faq-content').forEach(otherFaq => {
+          if (otherFaq !== faqContent) {
+            otherFaq.style.display = 'none';
+            const otherIcon = otherFaq.previousElementSibling.querySelector('span');
+            if (otherIcon) otherIcon.textContent = '＋';
+          }
+        });
+      }
+
+      const icon = faqHeader.querySelector('span');
+      if (faqContent.style.display === 'block') {
+        faqContent.style.display = 'none';
+        icon.textContent = '＋';
+      } else {
+        faqContent.style.display = 'block';
+        icon.textContent = '－';
+      }
+    });
+  });
+</script>
+
 </body>
 </html>
