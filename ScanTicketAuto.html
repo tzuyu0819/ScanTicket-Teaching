@@ -1,0 +1,930 @@
+﻿<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>交通費表單與 Gemini 解析</title>
+<style>
+table {
+  border-collapse: collapse;
+  width: 100%;
+  margin-top: 15px;
+  background: #f8f8f8;
+  border: 2px solid #ccc;
+  font-family: Arial, sans-serif;
+}
+th, td {
+  border: 1px solid #999;
+  padding: 10px;
+  white-space: pre-wrap;
+  font-size: 14px;
+}
+th { background: #e0e0e0; color: #333; }
+
+.form-header, .form-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-family: Arial, sans-serif;
+  margin-top: 8px;
+}
+.form-header {
+  border-bottom: 2px solid #ccc;
+  padding-bottom: 6px;
+  font-weight: bold;
+}
+.form-row {
+  background: #fafafa;
+  border: 1px solid #ddd;
+  padding: 8px 6px;
+  border-radius: 4px;
+}
+
+.col.serial { width: 40px; text-align: center; font-weight: bold; }
+.col.date { width: 130px; }
+.col.transport { flex: 2; }
+.col.desc { flex: 3; }
+.col.voucher { width: 100px; }
+.col.subtotal { width: 100px; }
+
+.transport-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.transport-options label { font-size: 13px; }
+
+.btn-group {
+  margin-top: 15px;
+  margin-bottom: 8px;
+}
+.btn-group button {
+  margin-right: 8px;
+  padding: 6px 14px;
+  background: #4a90e2;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+.btn-group button:hover { background: #357ab8; }
+
+.form-row input, .form-row textarea {
+  width: 100%;
+  box-sizing: border-box;
+  font-size: 14px;
+
+}
+
+#subtotalWrapper {
+  display: flex;
+  justify-content: flex-end; /* 整組靠右 */
+  align-items: center;       /* 垂直置中 */
+  gap: 6px;                  /* 文字與 input 間距 */
+  margin-top: 6px;
+}
+
+#subtotalSum {
+  font-weight: bold;
+  white-space: nowrap;       /* 不換行 */
+}
+
+</style>
+</head>
+<body>
+<TR>
+        <TD NOWRAP ALIGN="right" VALIGN="middle" CLASS="iptTitle" WIDTH="130">主旨：</TD>
+        <TD VALIGN="middle" WIDTH="100%"><INPUT TYPE="TEXT" MAXLENGTH=80 SIZE=40 NAME="MainIdea" CLASS="Default"></TD>
+</TR>
+<br><br>
+<TR>
+        <TD NOWRAP ALIGN="right" VALIGN="top" CLASS="iptTitle" WIDTH="130">先簽人員: </TD>
+        <TD VALIGN="top" WIDTH="100%">
+        <TEXTAREA NAME="MemberSelect" COLS=61 ROWS=2 CLASS="Default" readonly>
+        </TEXTAREA>
+    <SPAN>
+</TD>
+</TR>
+<button type=button name="MemberSelectbutton" id="MemberSelectbutton" class="searchBtn" onclick="SelectMems('Applicant','mymemberss','MemberSelect','3');" >
+<span class="ion-reply"></span> 選擇先簽人員
+</button>
+</span>
+<TR>
+<br><br>
+<TR>
+    <TD NOWRAP ALIGN="right" VALIGN="middle" CLASS="iptTitle" WIDTH="130">幣別：</TD>
+    <TD VALIGN="middle" WIDTH="100%">
+        <INPUT NAME="Currency" TYPE="RADIO" CLASS="Default" VALUE="新台幣" checked>
+        <FONT CLASS="Default">新台幣</FONT>
+        &nbsp;&nbsp;
+        <INPUT NAME="Currency" TYPE="RADIO" CLASS="Default" VALUE="人民幣">
+        <FONT CLASS="Default">人民幣</FONT>
+        &nbsp;&nbsp;
+        <INPUT NAME="Currency" TYPE="RADIO" CLASS="Default" VALUE="美金">
+        <FONT CLASS="Default">美金</FONT>
+        &nbsp;&nbsp;
+    </TD>
+</TR>
+<br><br>
+<TD NOWRAP ALIGN="right" VALIGN="middle" CLASS="iptTitle" WIDTH="130">總金額：</TD>
+<TD VALIGN="middle" WIDTH="100%">
+    <INPUT TYPE="TEXT" MAXLENGTH=10 SIZE=10 NAME="TotalPrice" id="TotalPrice" readonly>
+    <FONT CLASS="iptHint font-red fs90"> *必填 (可填0)</FONT>
+</TD>
+</TR>
+<div class="btn-group">
+  <button id="addRowBtn">➕ 新增一列</button>
+  <button id="delRowBtn">➖ 刪除最後一列</button>
+   <button id="exportCsvBtn">⬇️ 匯出 CSV</button>
+</div>
+
+<div class="form-header">
+  <div class="col serial">#</div>
+  <div class="col date">使用日期</div>
+  <div class="col transport">交通工具</div>
+  <div class="col desc">交通費說明</div>
+  <div class="col voucher">憑證張數</div>
+  <div class="col subtotal">單項小計</div>
+</div>
+<div id="parsed-rows-container"></div>
+
+<template id="row-template">
+  <div class="form-row">
+    <div class="col serial"></div>
+    <div class="col date">
+      <input type="date" data-field="datetimepicker0">
+    </div>
+    <div class="col transport">
+      <div class="transport-options">
+        <label><input type="checkbox" name="transport" value="機車"> 機車</label>
+        <label><input type="checkbox" name="transport" value="汽車"> 汽車</label>
+        <label><input type="checkbox" name="transport" value="公車"> 公車</label>
+        <label><input type="checkbox" name="transport" value="火車"> 火車</label>
+        <label><input type="checkbox" name="transport" value="高鐵"> 高鐵</label>
+        <label><input type="checkbox" name="transport" value="捷運"> 捷運</label>
+        <label><input type="checkbox" name="transport" value="飛機"> 飛機</label>
+        <label><input type="checkbox" name="transport" value="計程車"> 計程車</label>
+        <label><input type="checkbox" name="transport" value="租賃車"> 租賃車</label>
+        <label><input type="checkbox" name="transport" value="其它"> 其它</label>
+      </div>
+    </div>
+    <div class="col desc">
+      <textarea data-field="transportDesc" rows="2" placeholder="請輸入交通費說明"></textarea>
+    </div>
+    <div class="col voucher">
+      <input type="number" data-field="voucherCount" min="0">
+    </div>
+    <div class="col subtotal">
+      <input type="number" data-field="subtotal" min="0">
+    </div>
+  </div>
+</template>
+<br><br>
+<div id="subtotalWrapper">
+  <div id="subtotalSum">合　　計：</div>
+  <input
+    name="SumSubPrice_FOOTER_"
+    type="text"
+    readonly
+    class="標題 w100"
+    style="background-color:#FFFFFF;border-width:0;text-align:left;"
+  >
+</div>
+
+
+<input type="button" value="附件上傳" onclick="showUploadFrame()" style="margin-top:10px;padding:6px 12px;">
+<div id="uploadSection" style="display:none; border:1px solid #ccc; padding:15px; margin-top:10px; width:80%;">
+  <h3>上傳 PDF 給 Gemini 解析</h3>
+  <input type="file" id="fileInput" accept=".pdf,.jpg,.jpeg,.png"><br><br>
+  <label>其他說明：</label>
+  <input type="text" id="remarkInput" size="60"><br><br>
+  <button id="FilesUpload_SubmitBtn">執行解析</button><br><br>
+  <div>
+    <strong>Gemini 原始回傳：</strong>
+    <pre id="geminiResult" style="background:#f4f4f4; padding:10px; border:1px solid #ccc;"></pre>
+  </div>
+</div>
+
+<script>
+// ===================== 初始 row =====================
+addEmptyRow();
+updateSerials();
+
+// 顯示上傳區
+function showUploadFrame() {
+  document.getElementById("uploadSection").style.display = "block";
+}
+
+// 新增/刪除列
+document.getElementById("addRowBtn").addEventListener("click", function() {
+  addEmptyRow();
+  updateSerials();
+});
+document.getElementById("delRowBtn").addEventListener("click", function() {
+  var container = document.getElementById("parsed-rows-container");
+  var rows = container.querySelectorAll(".form-row");
+  if (rows.length > 0) rows[rows.length - 1].remove();
+  updateSerials();
+});
+
+function addEmptyRow() {
+  var container = document.getElementById("parsed-rows-container");
+  var tpl = document.getElementById("row-template");
+  container.appendChild(tpl.content.cloneNode(true));
+}
+
+function updateSerials() {
+  var rows = document.getElementById("parsed-rows-container").querySelectorAll(".form-row");
+  for (var i = 0; i < rows.length; i++) {
+    var cell = rows[i].querySelector(".serial");
+    if (cell) cell.textContent = i + 1;
+  }
+}
+
+// ===================== 交通工具 normalizer =====================
+function normalizeTransport(raw) {
+  if (!raw) return "其它";
+  var s = raw.toString().toLowerCase();
+
+  if (s.indexOf("hsr") >= 0 || s.indexOf("thsr") >= 0 || s.indexOf("high speed") >= 0 || s.indexOf("高鐵") >= 0) return "高鐵";
+  if (s.indexOf("train") >= 0 || s.indexOf("tra") >= 0 || s.indexOf("火車") >= 0) return "火車";
+  if (s.match(/\d{2}:\d{2}\s*->\s*\d{2}:\d{2}/)) return "火車";
+  if (s.indexOf("bus") >= 0 || s.indexOf("客運") >= 0 || s.indexOf("公車") >= 0) return "公車";
+  if (s.indexOf("捷運") >= 0 || s.indexOf("mrt") >= 0 || s.indexOf("metro") >= 0) return "捷運";
+  if (s.indexOf("計程車") >= 0 || s.indexOf("taxi") >= 0) return "計程車";
+  if (s.indexOf("飛機") >= 0 || s.indexOf("airplane") >= 0 || s.indexOf("flight") >= 0) return "飛機";
+  if (s.indexOf("機車") >= 0 || s.indexOf("scooter") >= 0) return "機車";
+  if (s.indexOf("汽車") >= 0 || s.indexOf("car") >= 0) return "汽車";
+  if (s.indexOf("租賃") >= 0 || s.indexOf("rental") >= 0) return "租賃車";
+  return "其它";
+}
+
+// ✅ 判斷是否要納入統計：扣值>0 且 交易內容含 台鐵/客運/計程車
+function isValidDeductTransaction(tx) {
+  if (!tx) return false;
+
+  var deduct = Number(tx.deduct || tx.amount || 0);
+  if (!(deduct > 0)) return false;
+
+  var content = String(tx.content || tx.desc || tx.merchant || "").toLowerCase();
+
+  var hitTRA = (content.indexOf("台鐵") >= 0 || content.indexOf("tra") >= 0);
+  var hitBus = (content.indexOf("客運") >= 0);
+  var hitTaxi = (
+    content.indexOf("計程車") >= 0 ||
+    content.indexOf("taxi") >= 0 ||
+    content.indexOf("uber") >= 0 ||
+    content.indexOf("55688") >= 0
+  );
+
+  return hitTRA || hitBus || hitTaxi;
+}
+
+// ✅ 根據交易內容轉換交通分類（僅在符合條件時使用）
+function transportFromContent(content) {
+  var s = String(content || "").toLowerCase();
+  if (s.indexOf("計程車") >= 0 || s.indexOf("taxi") >= 0 || s.indexOf("uber") >= 0 || s.indexOf("55688") >= 0) return "計程車";
+  if (s.indexOf("客運") >= 0) return "公車";
+  if (s.indexOf("台鐵") >= 0 || s.indexOf("tra") >= 0) return "火車";
+  return "其它";
+}
+
+// ✅ 將 Gemini 回傳的 array 轉成「扣值明細符合才加入」的 array
+function filterAndMapDeductTransactions(arr) {
+  if (!Array.isArray(arr)) return [];
+
+  var out = [];
+  for (var i = 0; i < arr.length; i++) {
+    var it = arr[i];
+    if (!it) continue;
+
+    // A) 原本格式（票據）
+    if (it.date && (it.amount != null) && it.transport) {
+      out.push({
+        date: it.date,
+        amount: Number(it.amount || 0),
+        transport: normalizeTransport(it.transport)
+      });
+      continue;
+    }
+
+    // B) 扣值明細格式（內容+扣值）
+    if (it.date && (it.deduct != null || it.amount != null) && (it.content || it.desc || it.merchant)) {
+      if (!isValidDeductTransaction(it)) continue;
+
+      var deduct = Number(it.deduct || it.amount || 0);
+      var content = it.content || it.desc || it.merchant;
+
+      out.push({
+        date: it.date,
+        amount: deduct,
+        transport: transportFromContent(content),
+        _rawContent: content
+      });
+    }
+  }
+
+  return out;
+}
+
+// ✅ 修正你原本的 bug：扣值過濾只作用在扣值資料，不要誤殺其他票據
+function mergeDeductFilteredKeepOthers(arr) {
+  if (!Array.isArray(arr)) return [];
+
+  var hasDeductStyle = false;
+  for (var i = 0; i < arr.length; i++) {
+    var it = arr[i];
+    if (it && (it.content || it.desc || it.merchant) && (it.deduct != null || it.amount != null) && !it.transport) {
+      hasDeductStyle = true;
+      break;
+    }
+  }
+
+  // 如果有扣值明細格式 → 用 filterAndMapDeductTransactions 做清理
+  // 如果沒有 → 不要動，避免把高鐵票之類洗掉
+  if (hasDeductStyle) {
+    return filterAndMapDeductTransactions(arr);
+  }
+  return arr;
+}
+
+// ===================== Base64（快） =====================
+function fileToBase64(file) {
+  return new Promise(function(resolve, reject) {
+    var reader = new FileReader();
+    reader.onload = function() {
+      resolve(reader.result.split(",")[1]);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+// ===================== JSON array 解析（ES5 相容版） =====================
+function extractJsonArrayFromResponse(data) {
+  var texts = [];
+
+  try {
+    if (data && data.candidates && data.candidates.length) {
+      for (var i = 0; i < data.candidates.length; i++) {
+        var c = data.candidates[i];
+        if (c && c.content && c.content.parts) {
+          for (var j = 0; j < c.content.parts.length; j++) {
+            var p = c.content.parts[j];
+            if (p && typeof p.text === "string") texts.push(p.text);
+          }
+        }
+      }
+    }
+  } catch (e) {}
+
+  try {
+    var rawAll = JSON.stringify(data || {}, null, 0);
+    if (rawAll) texts.push(rawAll);
+  } catch (e2) {}
+
+  var candidatesToTry = [];
+  for (var k = 0; k < texts.length; k++) {
+    var s = String(texts[k] || "").trim();
+    if (!s) continue;
+    s = s.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
+    candidatesToTry.push(s);
+  }
+
+  for (var x = 0; x < candidatesToTry.length; x++) {
+    var t = candidatesToTry[x];
+    try {
+      var parsed = JSON.parse(t);
+      if (Array.isArray(parsed)) return parsed;
+
+      if (parsed && typeof parsed === "object") {
+        var keys = ["items","data","result","results","transactions","records"];
+        for (var y = 0; y < keys.length; y++) {
+          if (parsed[keys[y]] && Array.isArray(parsed[keys[y]])) return parsed[keys[y]];
+        }
+      }
+    } catch (e3) {}
+  }
+
+  var fullText = candidatesToTry.join("\n");
+  var mArr = fullText.match(/\[[\s\S]*\]/);
+  if (mArr) return JSON.parse(mArr[0]);
+
+  throw new Error("找不到 JSON array");
+}
+
+// ===================== Gemini 呼叫（gemini-2.0-flash） =====================
+async function callGeminiAPI(file, remark) {
+  var API_KEY = "AIzaSyD8uxOj7xLIDR_Dcl9EMK1mOGu03kOZSZY";
+
+  var base64data = await fileToBase64(file);
+  var mimeType = file.type || "application/octet-stream";
+
+  var promptText = ""
+  + "你是交通票據/交易紀錄解析器。請從檔案中「所有頁面」找出所有交通相關交易並回傳 JSON array（多筆）。\n"
+  + "只要檔案中有多筆金額/多張票，就必須回傳多個物件（不要只回一筆）。\n\n"
+  + "格式：\n"
+  + "[\n"
+  + "  {\"date\":\"YYYY-MM-DD\",\"amount\":number,\"transport\":\"高鐵|火車|公車|捷運|計程車|飛機|機車|汽車|租賃車|其它\"}\n"
+  + "]\n\n"
+  + "規則：\n"
+  + "- HSR/THSR/High Speed/高鐵 => 高鐵\n"
+  + "- Train/TRA/火車 => 火車\n"
+  + "- Bus/客運/公車 => 公車\n"
+  + "- MRT/捷運/Metro => 捷運\n"
+  + "- Taxi/計程車 => 計程車\n"
+  + "- Flight/飛機 => 飛機\n"
+  + "- 其他 => 其它\n\n"
+  + "重要：\n"
+  + "- 每一筆交易 = array 中一個元素（不要合併加總，我前端會同日合併）\n"
+  + "- amount 若看到 -$77 代表支出，請輸出 77（正數）\n"
+  + "- 只能輸出 JSON array，不要任何文字/markdown\n\n"
+  + "額外補充：" + remark + "\n";
+
+  promptText += "日期必須是票面/列表中『實際存在』的日期，不允許猜測或補年份。看不到年份就用檔案中最明確的年份，不要自己加一個新年份。";
+
+  promptText += "\n如果檔案是「歷史交易明細表/扣值明細」，請改用以下格式輸出：\n[\n  {\"date\":\"YYYY-MM-DD\",\"content\":\"交易內容文字\",\"deduct\":number}\n]\n其中 deduct 一定要取「扣值」欄位，且只輸出扣值>0的筆。\n";
+
+  var body = {
+    contents: [
+      {
+        role: "user",
+        parts: [
+          { inline_data: { mime_type: mimeType, data: base64data } },
+          { text: promptText }
+        ]
+      }
+    ],
+    generationConfig: {
+      responseMimeType: "application/json",
+      temperature: 0,
+      topP: 1,
+      maxOutputTokens: 4096
+    }
+  };
+
+  var model = "gemini-2.0-flash";
+
+  var res = await fetch(
+    "https://generativelanguage.googleapis.com/v1beta/models/" + model + ":generateContent?key=" + API_KEY,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body)
+    }
+  );
+
+  if (!res.ok) {
+    var txt = await res.text();
+    throw new Error("Gemini API 錯誤：" + res.status + "\n" + txt);
+  }
+
+  return await res.json();
+}
+
+// ===================== 按鈕：執行解析 =====================
+document.getElementById("FilesUpload_SubmitBtn").addEventListener("click", async function() {
+  var fileElem = document.getElementById("fileInput");
+  var remarkElem = document.getElementById("remarkInput");
+  var resultElem = document.getElementById("geminiResult");
+  var file = fileElem.files[0];
+
+  if (!file) { alert("請先選擇檔案！"); return; }
+
+  this.disabled = true;
+  resultElem.innerText = "正在呼叫 Gemini API…";
+
+  try {
+    var data = await callGeminiAPI(file, remarkElem.value);
+    var arr = extractJsonArrayFromResponse(data);
+    arr = postProcessTransactions(arr);
+
+    // ✅ 只在是扣值明細時才套過濾，不要誤殺其他票據
+    arr = mergeDeductFilteredKeepOthers(arr);
+
+    console.log("✅ Gemini回傳筆數:", arr.length, arr);
+
+    // ✅ 同日合併顯示 + 同日合併填表
+    showJsonAsTable_MergeByDate(arr);
+    populateFormRows_MergeByDate(arr);
+    updateSubtotalSum();
+
+  } catch (e) {
+    console.error(e);
+    resultElem.innerText = "錯誤：" + e.message;
+  } finally {
+    this.disabled = false;
+  }
+});
+
+// ===================== ✅ 同日合併：顯示 table（含日期排序） =====================
+function showJsonAsTable_MergeByDate(data) {
+  var resultElem = document.getElementById("geminiResult");
+  resultElem.innerText = "";
+
+  if (!Array.isArray(data) || data.length === 0) {
+    resultElem.innerText = "沒有資料";
+    return;
+  }
+
+  var byDate = {};
+  for (var i = 0; i < data.length; i++) {
+    var it = data[i];
+    var rd = it.date || "";
+    var tr = normalizeTransport(it.transport || "");
+    var am = Number(it.amount || 0);
+
+    var dstr = "";
+    if (rd) {
+      var dd = new Date(rd);
+      if (!isNaN(dd)) {
+        dstr = dd.getFullYear()+"/"+("0"+(dd.getMonth()+1)).slice(-2)+"/"+("0"+dd.getDate()).slice(-2);
+      }
+    }
+    if (!dstr) dstr = "未填日期";
+
+    if (!byDate[dstr]) byDate[dstr] = {};
+    if (!byDate[dstr][tr]) byDate[dstr][tr] = { totalAmount: 0, listCount: 0 };
+
+    byDate[dstr][tr].totalAmount += am;
+    byDate[dstr][tr].listCount += 1;
+  }
+
+  var tableRows = [];
+  for (var dateKey in byDate) {
+    var g = byDate[dateKey];
+    var tools = [];
+    var desc = [];
+    var totalCount = 0;
+    var totalSum = 0;
+
+    for (var tKey in g) {
+      tools.push(tKey);
+      desc.push(tKey + " 金額=" + g[tKey].totalAmount + "、" + tKey + " 張數=" + g[tKey].listCount);
+      totalCount += g[tKey].listCount;
+      totalSum += g[tKey].totalAmount;
+    }
+
+    tableRows.push({ date: dateKey, transport: tools.join("、"), desc: desc.join("\n"), count: totalCount, amount: totalSum });
+  }
+
+  // ✅ 日期排序：由早到晚
+  tableRows.sort(function(a, b) {
+    var da = new Date(a.date.replace(/\//g, "-"));
+    var db = new Date(b.date.replace(/\//g, "-"));
+    return da - db;
+  });
+
+  var table = document.createElement("table");
+  var hdr = ["序號","使用日期","交通工具","交通費說明","憑證張數","單項小計"];
+  var htr = document.createElement("tr");
+  for (var z = 0; z < hdr.length; z++) {
+    var th = document.createElement("th");
+    th.innerText = hdr[z];
+    htr.appendChild(th);
+  }
+  table.appendChild(htr);
+
+  for (var r = 0; r < tableRows.length; r++) {
+    var row = tableRows[r];
+    var rw = document.createElement("tr");
+    var vals = [r+1, row.date, row.transport, row.desc, row.count, row.amount];
+
+    for (var q = 0; q < vals.length; q++) {
+      var td = document.createElement("td");
+      td.innerText = vals[q];
+      rw.appendChild(td);
+    }
+    table.appendChild(rw);
+  }
+
+  resultElem.appendChild(table);
+}
+
+// ===================== ✅ 同日合併：填表（含日期排序） =====================
+function populateFormRows_MergeByDate(data) {
+  var c = document.getElementById("parsed-rows-container");
+  c.innerHTML = "";
+  if (!Array.isArray(data) || data.length === 0) return;
+
+  var byDate = {};
+  for (var i = 0; i < data.length; i++) {
+    var it = data[i];
+    var rd = it.date || "";
+    var trv = normalizeTransport(it.transport || "");
+    var am = Number(it.amount || 0);
+
+    var dKey = "";
+    if (rd) {
+      var dd = new Date(rd);
+      if (!isNaN(dd)) dKey = dd.getFullYear()+"-"+("0"+(dd.getMonth()+1)).slice(-2)+"-"+("0"+dd.getDate()).slice(-2);
+    }
+
+    if (!byDate[dKey]) byDate[dKey] = {};
+    if (!byDate[dKey][trv]) byDate[dKey][trv] = { totalAmount: 0, count: 0 };
+
+    byDate[dKey][trv].totalAmount += am;
+    byDate[dKey][trv].count += 1;
+  }
+
+  // ✅ 日期排序：由早到晚
+  var keys = [];
+  for (var dk in byDate) keys.push(dk);
+  keys.sort(function(a, b) { return new Date(a) - new Date(b); });
+
+  for (var idx = 0; idx < keys.length; idx++) {
+    var dk2 = keys[idx];
+    var g2 = byDate[dk2];
+    var desc2 = [];
+    var trans2 = [];
+    var vc2 = 0;
+    var sm2 = 0;
+
+    for (var t2 in g2) {
+      trans2.push(t2);
+      desc2.push(t2 + " 金額=" + g2[t2].totalAmount + "、" + t2 + " 張數=" + g2[t2].count);
+      vc2 += g2[t2].count;
+      sm2 += g2[t2].totalAmount;
+    }
+
+    var tpl = document.getElementById("row-template");
+    var cl2 = tpl.content.cloneNode(true);
+
+    var di = cl2.querySelector('input[data-field="datetimepicker0"]');
+    if (di) di.value = dk2;
+
+    for (var t = 0; t < trans2.length; t++) {
+      var tv = trans2[t];
+      var cb = cl2.querySelector('input[name="transport"][value="' + tv + '"]');
+      if (cb) cb.checked = true;
+    }
+
+    var de = cl2.querySelector('textarea[data-field="transportDesc"]');
+    if (de) de.value = desc2.join("\n");
+
+    var vcEl = cl2.querySelector('input[data-field="voucherCount"]');
+    if (vcEl) vcEl.value = vc2;
+
+    var sbEl = cl2.querySelector('input[data-field="subtotal"]');
+    if (sbEl) sbEl.value = sm2;
+
+    c.appendChild(cl2);
+  }
+
+  updateSerials();
+}
+
+// ===================== 後處理：修年份 + 移除可疑幻覺 =====================
+function postProcessTransactions(arr) {
+  if (!Array.isArray(arr) || arr.length === 0) return arr;
+
+  var yearCount = {};
+  var items = [];
+  for (var i = 0; i < arr.length; i++) {
+    var it = arr[i];
+    var d = parseDateSafe(it.date);
+    var y = d ? d.getFullYear() : null;
+    if (y) yearCount[y] = (yearCount[y] || 0) + 1;
+
+    var copy = {};
+    for (var k in it) copy[k] = it[k];
+    copy._dateObj = d;
+    copy._year = y;
+    items.push(copy);
+  }
+
+  var mainYear = null;
+  var best = -1;
+  for (var yy in yearCount) {
+    if (yearCount[yy] > best) {
+      best = yearCount[yy];
+      mainYear = Number(yy);
+    }
+  }
+
+  var mainYearMD = {};
+  for (var j = 0; j < items.length; j++) {
+    var it2 = items[j];
+    if (it2._dateObj && it2._year === mainYear) {
+      var m = it2._dateObj.getMonth() + 1;
+      var d2 = it2._dateObj.getDate();
+      mainYearMD[m + "-" + d2] = true;
+    }
+  }
+
+  for (var j2 = 0; j2 < items.length; j2++) {
+    var it3 = items[j2];
+    if (!it3._dateObj || !it3._year || !mainYear) continue;
+
+    var diff = it3._year - mainYear;
+    if (diff === 1 || diff === -1) {
+      var mm = it3._dateObj.getMonth() + 1;
+      var dd = it3._dateObj.getDate();
+      if (mainYearMD[mm + "-" + dd]) {
+        it3._dateObj.setFullYear(mainYear);
+        it3.date = formatDateYYYYMMDD(it3._dateObj);
+        it3._year = mainYear;
+      }
+    }
+  }
+
+  var byDate = {};
+  for (var j3 = 0; j3 < items.length; j3++) {
+    var it4 = items[j3];
+    var d3 = parseDateSafe(it4.date);
+    var key = d3 ? formatDateYYYYMMDD(d3) : (it4.date || "");
+    if (!byDate[key]) byDate[key] = [];
+    byDate[key].push(it4);
+  }
+
+  var cleaned = [];
+  for (var key2 in byDate) {
+    var list = byDate[key2];
+    if (list.length === 1) {
+      var one = list[0];
+      var amt = Number(one.amount || 0);
+      var tr = normalizeTransport(one.transport || "");
+      if (amt > 0 && amt <= 30 && tr === "火車") {
+        continue;
+      }
+    }
+    for (var p = 0; p < list.length; p++) cleaned.push(list[p]);
+  }
+
+  var out = [];
+  for (var u = 0; u < cleaned.length; u++) {
+    var obj = cleaned[u];
+    delete obj._dateObj;
+    delete obj._year;
+    out.push(obj);
+  }
+  return out;
+}
+
+function parseDateSafe(s) {
+  if (!s) return null;
+  var d = new Date(s);
+  if (!isNaN(d)) return d;
+
+  var m = String(s).match(/^(\d{4})\/(\d{1,2})\/(\d{1,2})$/);
+  if (m) {
+    var yyyy = Number(m[1]);
+    var mm = Number(m[2]);
+    var dd = Number(m[3]);
+    var d2 = new Date(yyyy, mm - 1, dd);
+    return isNaN(d2) ? null : d2;
+  }
+  return null;
+}
+
+function formatDateYYYYMMDD(d) {
+  var y = d.getFullYear();
+  var m = String(d.getMonth() + 1);
+  if (m.length === 1) m = "0" + m;
+  var day = String(d.getDate());
+  if (day.length === 1) day = "0" + day;
+  return y + "-" + m + "-" + day;
+}
+
+// ===================== 合計所有 subtotal =====================
+function updateSubtotalSum() {
+  var sum = 0;
+
+  var subs = document.querySelectorAll('input[data-field="subtotal"]');
+  for (var i = 0; i < subs.length; i++) {
+    var v = Number(subs[i].value);
+    if (!isNaN(v) && v > 0) {
+      sum += v;
+    }
+  }
+
+  // ① 合計欄位
+  var footer = document.querySelector('input[name="SumSubPrice_FOOTER_"]');
+  if (footer) footer.value = sum;
+
+  // ② 同步寫入 TotalPrice ⭐
+  var total = document.getElementById("TotalPrice");
+  if (total) total.value = sum;
+}
+
+
+document.getElementById("addRowBtn").addEventListener("click", function() {
+  addEmptyRow();
+  updateSerials();
+  updateSubtotalSum(); // ✅
+});
+
+document.getElementById("delRowBtn").addEventListener("click", function() {
+  var container = document.getElementById("parsed-rows-container");
+  var rows = container.querySelectorAll(".form-row");
+  if (rows.length > 0) rows[rows.length - 1].remove();
+  updateSerials();
+  updateSubtotalSum(); // ✅
+});
+
+document.getElementById("parsed-rows-container")
+  .addEventListener("input", function(e) {
+    if (e.target && e.target.getAttribute("data-field") === "subtotal") {
+      updateSubtotalSum();
+    }
+  });
+
+
+// ⭐ 確保每次選同一檔案也會觸發
+document.getElementById("fileInput").addEventListener("click", function () {
+  this.value = "";
+});
+
+document.getElementById("fileInput").addEventListener("change", function () {
+  var file = this.files && this.files[0];
+  if (!file) return;
+
+  var filename = file.name.replace(/\.[^/.]+$/, "");
+  var mainIdea = document.querySelector('input[name="MainIdea"]');
+  if (mainIdea) mainIdea.value = filename;
+});
+
+
+//CSV 匯出
+document.getElementById("exportCsvBtn").addEventListener("click", exportToCSV);
+
+function exportToCSV() {
+  var rows = document.querySelectorAll("#parsed-rows-container .form-row");
+  if (rows.length === 0) {
+    alert("沒有資料可匯出");
+    return;
+  }
+
+  var csv = [];
+  // 表頭
+  csv.push([
+    "序號",
+    "使用日期",
+    "交通工具",
+    "交通費說明",
+    "憑證張數",
+    "單項小計"
+  ].join(","));
+
+  for (var i = 0; i < rows.length; i++) {
+    var row = rows[i];
+
+    var serial = i + 1;
+    var date = row.querySelector('input[data-field="datetimepicker0"]')?.value || "";
+
+    // 勾選的交通工具
+    var transports = [];
+    var checks = row.querySelectorAll('input[name="transport"]:checked');
+    for (var j = 0; j < checks.length; j++) {
+      transports.push(checks[j].value);
+    }
+
+    var desc = row.querySelector('textarea[data-field="transportDesc"]')?.value || "";
+    var voucher = row.querySelector('input[data-field="voucherCount"]')?.value || "";
+    var subtotal = row.querySelector('input[data-field="subtotal"]')?.value || "";
+
+    csv.push([
+      serial,
+      escapeCSV(date),
+      escapeCSV(transports.join("、")),
+      escapeCSV(desc),
+      voucher,
+      subtotal
+    ].join(","));
+  }
+
+  downloadCSV(csv.join("\n"));
+}
+
+function escapeCSV(text) {
+  if (text == null) return "";
+  text = String(text);
+  if (text.includes(",") || text.includes("\n") || text.includes('"')) {
+    text = '"' + text.replace(/"/g, '""') + '"';
+  }
+  return text;
+}
+
+ // 勾選的交通工具
+function downloadCSV(content) {
+  // 加 BOM，Excel 才不會亂碼
+  var blob = new Blob(["\uFEFF" + content], { type: "text/csv;charset=utf-8;" });
+  var url = URL.createObjectURL(blob);
+
+  var a = document.createElement("a");
+  a.href = url;
+  a.download = "交通費明細.csv";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+//原始合併明細
+var RAW_GEMINI_ITEMS = [];      // 原始 Gemini 明細
+var MERGED_ITEMS = [];         // 同日合併後明細
+
+</script>
+
+</body>
+</html>
